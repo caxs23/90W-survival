@@ -1,47 +1,49 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>90병동 텍스트 어드벤처</title>
 <style>
-    body {
-        margin: 0;
-        font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-        background: #111;
-        color: #f2f2f2;
-        display: flex;
-        justify-content: center;
-    }
-    #game {
-        max-width: 600px;
-        width: 100%;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-    #status {
-        margin-bottom: 10px;
-        font-weight: bold;
-    }
-    #text {
-        white-space: pre-wrap;
-        line-height: 1.6;
-        min-height: 220px;
-        margin-bottom: 20px;
-    }
-    .choices button {
-        width: 100%;
-        margin-bottom: 10px;
-        padding: 14px;
-        font-size: 16px;
-        background: #222;
-        color: #fff;
-        border: 1px solid #444;
-        border-radius: 6px;
-    }
-    .choices button:active {
-        background: #444;
-    }
+body {
+    margin: 0;
+    background: #111;
+    color: #f2f2f2;
+    font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    display: flex;
+    justify-content: center;
+}
+#game {
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+#status {
+    margin-bottom: 12px;
+    font-weight: bold;
+}
+#text {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    min-height: 240px;
+}
+.choices {
+    margin-top: 20px;
+}
+button {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 6px;
+}
+button:active {
+    background: #444;
+}
 </style>
 </head>
 <body>
@@ -56,68 +58,60 @@ let sanity = 3;
 const textEl = document.getElementById("text");
 const choicesEl = document.querySelector(".choices");
 const statusEl = document.getElementById("status");
-
-const typingSpeed = 30;
+const speed = 30;
 
 function updateStatus() {
     statusEl.textContent = `정신력: ${sanity}`;
     if (sanity <= 0) {
-        showText("정신력이 모두 소진되었다.\n오늘은 무사히 퇴근하지 못했다.\n\n[패배]");
+        renderText(
+`정신력이 모두 소진되었다.
+오늘은 무사히 퇴근하지 못했다.
+
+[패배]`
+        );
         choicesEl.innerHTML = "";
     }
 }
 
-function typeText(text, callback) {
+function renderText(text, callback) {
     textEl.textContent = "";
+    choicesEl.innerHTML = "";
     let i = 0;
-    const interval = setInterval(() => {
-        textEl.textContent += text[i];
-        i++;
+    const timer = setInterval(() => {
+        textEl.textContent += text[i++];
         if (i >= text.length) {
-            clearInterval(interval);
+            clearInterval(timer);
             if (callback) callback();
         }
-    }, typingSpeed);
+    }, speed);
 }
 
-function showText(text, onComplete) {
+function renderChoices(list) {
     choicesEl.innerHTML = "";
-    typeText(text, onComplete);
-}
-
-function showNextButton(nextAction) {
-    choicesEl.innerHTML = "";
-    const btn = document.createElement("button");
-    btn.textContent = "다음으로";
-    btn.onclick = nextAction;
-    choicesEl.appendChild(btn);
-}
-
-function showChoices(choices) {
-    choicesEl.innerHTML = "";
-    choices.forEach(choice => {
+    list.forEach(c => {
         const btn = document.createElement("button");
-        btn.textContent = choice.text;
-        btn.onclick = choice.action;
+        btn.textContent = c.text;
+        btn.onclick = c.action;
         choicesEl.appendChild(btn);
     });
 }
 
-/* ===================== SCENES ===================== */
+/* ================== SCENES ================== */
 
 function intro() {
-    showText(
+renderText(
 `세상엔 이해할 수 없는 사람들이 참 많은 것 같다.
 가장 슬픈 건, 내가 일하는 90병동에 제일 많다는 거다.
 오늘도 이상한 말들을 무사히 흘려보내고 퇴근할 수 있을까?
 
 - 병동으로 출근한다.`,
-    () => showNextButton(scene1)
-    );
+() => renderChoices([
+    { text: "1. 병동으로 출근한다.", action: scene1 }
+]));
 }
 
 function scene1() {
-    showText(
+renderText(
 `"안녕하세요."
 짧은 인사를 하고 자리에 앉는다.
 인계를 바삐 마치고 아침약을 보려는데, 스테이션 앞으로 보호사님👓이 나타난다.
@@ -128,20 +122,17 @@ function scene1() {
 
 도대체 무슨 말씀을 하시려는 걸까..
 참치 회를 말씀하시는 걸까. 식사 약속을 잡으시려는 걸까.`,
-    () => {
-        showChoices([
-            { text: "이야기를 들어본다.", action: scene1_1 },
-            { text: "적당히 둘러댄다.", action: scene1_2 }
-        ]);
-    });
+() => renderChoices([
+    { text: "1. 이야기를 들어본다.", action: scene1_1 },
+    { text: "2. 적당히 둘러댄다.", action: scene1_2 }
+]));
 }
 
 function scene1_1() {
-    sanity--;
-    updateStatus();
-    if (sanity <= 0) return;
+sanity--; updateStatus();
+if (sanity <= 0) return;
 
-    showText(
+renderText(
 `"참치요~? 갑자기 왠 참치예요?"
 
 "오늘 점심이! 참치마요 덮밥이예요! 핳핳핳! 😎"
@@ -149,58 +140,55 @@ function scene1_1() {
 '보호사님은 왜 저런 농담을 하실까..'
 
 너무 어이없는 농담에 정신이 아득해진다.
-(정신력이 1 감소했다.)
-(장면 2로 향한다.)`,
-    () => showNextButton(scene2)
-    );
+(정신력이 1 감소했다.)`,
+() => renderChoices([
+    { text: "1. 다음으로 (장면 2로 향한다.)", action: scene2 }
+]));
 }
 
 function scene1_2() {
-    showText(
+renderText(
 `"제가 참치를 못 먹어요 보호사님."
 
 "아, 그래요? 점심 메뉴가 나와서 그런건데.."
 
 보호사님은 멋쩍게 자리로 돌아갔다.
-어이없는 말을 듣지 않아서 다행이야.
-(장면 2로 향한다.)`,
-    () => showNextButton(scene2)
-    );
+어이없는 말을 듣지 않아서 다행이야.`,
+() => renderChoices([
+    { text: "1. 다음으로 (장면 2로 향한다.)", action: scene2 }
+]));
 }
 
 function scene2() {
-    showText(
+renderText(
 `멋쩍게 앉아있던 보호사님은, B팀 선생님이 자리를 비운 사이 컴퓨터에 앉았다.
 "이번에요, 현대바이오에서 2상에 들어간게 있는데, 이번에는 진짜 유력하거든요. 근데 문제가 있어."
 
 늘 하시던 주식얘기인데, 뭐가 유력하다는 걸까?
 근데 아까 농담도 못 받아드렸는데.. 들어볼까?`,
-    () => {
-        showChoices([
-            { text: "아냐. 그래도 적당히 끊자.", action: scene2_1 },
-            { text: "심심해 하시는 것 같은데 들어드릴까?", action: scene2_2 }
-        ]);
-    });
+() => renderChoices([
+    { text: "1. 아냐. 그래도 적당히 끊자.", action: scene2_1 },
+    { text: "2. 심심해 하시는 것 같은데 들어드릴까?", action: scene2_2 }
+]));
 }
 
 function scene2_1() {
-    showText(
+renderText(
 `"보호사님 근데 샤워장 여셨어요?"
 
 "아이쿠, 그걸 깜빡했네. 핳핳."
 
-보호사님이 황급히 샤워장으로 향한다.
-(장면 3으로 향한다)`,
-    () => showNextButton(scene3)
-    );
+보호사님이 황급히 샤워장으로 향한다.`,
+() => renderChoices([
+    { text: "1. 다음으로 (장면 3으로 향한다)", action: scene3 }
+]));
 }
 
 function scene2_2() {
-    sanity--;
-    updateStatus();
-    if (sanity <= 0) return;
+sanity--; updateStatus();
+if (sanity <= 0) return;
 
-    showText(
+renderText(
 `"무슨일인데요?"
 
 보호사님의 눈빛이 번뜩였다.
@@ -208,20 +196,20 @@ function scene2_2() {
 "이게 2상에서 거부반응이 적어서 3상으로 갔는데, 이게 사실 코로나 치료제를 기반으로 한거거든요. 근데 코로나에서 연구했던 결과로 다른 바이러스를 치료한다는 거지. 이게 진짜 물건이거든요. 여기 단톡방에도 지금 뉴스만 조용하지 온 세상이 난리가 날 뉴스예요. 근데 식약처에서 허가를 안해줘. 식약처 이 쉐키들이..! 그래서 내가 민원을 넣었거든요. 당신들 배나 불리지 말고 똑바로 심사해라. 현대바이오 신약이 이제 허가를 받는게 타당하다...(중략)
 
 보호사님의 투머치 토크에 정신이 아득해졌다.
-(정신력이 1 감소했다.)
-(장면 3으로 향한다.)`,
-    () => showNextButton(scene3)
-    );
+(정신력이 1 감소했다.)`,
+() => renderChoices([
+    { text: "1. 다음으로 (장면 3으로 향한다)", action: scene3 }
+]));
 }
 
 function scene3() {
-    showText(
+renderText(
 `장면 3
 - 아직 개발중입니다. 플레이해주셔서 감사합니다.-`
-    );
+);
 }
 
-/* ===================== START ===================== */
+/* START */
 intro();
 </script>
 </body>
