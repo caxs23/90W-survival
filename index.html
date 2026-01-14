@@ -26,7 +26,7 @@
     #text {
         white-space: pre-wrap;
         line-height: 1.6;
-        min-height: 200px;
+        min-height: 220px;
         margin-bottom: 20px;
     }
     .choices button {
@@ -80,9 +80,17 @@ function typeText(text, callback) {
     }, typingSpeed);
 }
 
-function showText(text, callback) {
+function showText(text, onComplete) {
     choicesEl.innerHTML = "";
-    typeText(text, callback);
+    typeText(text, onComplete);
+}
+
+function showNextButton(nextAction) {
+    choicesEl.innerHTML = "";
+    const btn = document.createElement("button");
+    btn.textContent = "다음으로";
+    btn.onclick = nextAction;
+    choicesEl.appendChild(btn);
 }
 
 function showChoices(choices) {
@@ -104,11 +112,8 @@ function intro() {
 오늘도 이상한 말들을 무사히 흘려보내고 퇴근할 수 있을까?
 
 - 병동으로 출근한다.`,
-    () => {
-        showChoices([
-            { text: "출근한다.", action: scene1 }
-        ]);
-    });
+    () => showNextButton(scene1)
+    );
 }
 
 function scene1() {
@@ -146,7 +151,7 @@ function scene1_1() {
 너무 어이없는 농담에 정신이 아득해진다.
 (정신력이 1 감소했다.)
 (장면 2로 향한다.)`,
-    scene2
+    () => showNextButton(scene2)
     );
 }
 
@@ -159,7 +164,7 @@ function scene1_2() {
 보호사님은 멋쩍게 자리로 돌아갔다.
 어이없는 말을 듣지 않아서 다행이야.
 (장면 2로 향한다.)`,
-    scene2
+    () => showNextButton(scene2)
     );
 }
 
@@ -186,7 +191,7 @@ function scene2_1() {
 
 보호사님이 황급히 샤워장으로 향한다.
 (장면 3으로 향한다)`,
-    scene3
+    () => showNextButton(scene3)
     );
 }
 
@@ -205,7 +210,7 @@ function scene2_2() {
 보호사님의 투머치 토크에 정신이 아득해졌다.
 (정신력이 1 감소했다.)
 (장면 3으로 향한다.)`,
-    scene3
+    () => showNextButton(scene3)
     );
 }
 
