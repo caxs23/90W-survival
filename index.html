@@ -1,456 +1,377 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>90병동 텍스트 어드벤처</title>
-<style>
-body {
-  margin: 0;
-  background: #111;
-  color: #eee;
-  font-family: "Apple SD Gothic Neo","Noto Sans KR",sans-serif;
-}
-#game {
-  max-width: 520px;
-  margin: auto;
-  padding: 16px;
-}
-#sanity {
-  text-align: right;
-  font-size: 22px;
-  margin-bottom: 8px;
-}
-#text {
-  min-height: 260px;
-  white-space: pre-wrap;
-  line-height: 1.6;
-  font-size: 16px;
-}
-.choices {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-button {
-  background: #222;
-  color: #fff;
-  border: 1px solid #444;
-  padding: 14px;
-  font-size: 16px;
-  border-radius: 8px;
-}
-button:active { background:#333; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90병동 텍스트 어드벤처</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
+            background: #1e293b;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .text-display {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 1.5rem;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+        .choice-container {
+            padding: 2rem;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .choice-btn {
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: left;
+            transition: all 0.2s;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 0.5s forwards;
+        }
+        .choice-btn:hover {
+            background: #475569;
+            border-color: #64748b;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .mental-bar {
+            padding: 1rem 2rem;
+            background: #0f172a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+        .mental-icons {
+            font-size: 1.5rem;
+            letter-spacing: 0.25rem;
+        }
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 0.7s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .scene-title {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: -0.5rem;
+        }
+        .dialogue-text {
+            white-space: pre-wrap;
+        }
+        .mental-change {
+            font-weight: bold;
+            color: #fb7185;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
 </head>
 <body>
-<div id="game">
-  <div id="sanity"></div>
-  <div id="text"></div>
-  <div class="choices"></div>
+
+<div class="game-container">
+    <div class="mental-bar" id="mentalBar">
+        <span class="text-sm font-bold text-slate-400">정신력</span>
+        <div class="mental-icons" id="mentalIcons"></div>
+    </div>
+    
+    <div class="text-display" id="textDisplay">
+        <!-- 대사 출력 영역 -->
+    </div>
+
+    <div class="choice-container" id="choiceContainer">
+        <!-- 선택지 영역 -->
+    </div>
 </div>
 
 <script>
-const textEl = document.getElementById("text");
-const choiceEl = document.querySelector(".choices");
-const sanityEl = document.getElementById("sanity");
+    const gameData = {
+        'intro': {
+            title: '인트로',
+            text: `세상엔 이해할 수 없는 사람들이 참 많은 것 같다.\n가장 슬픈 건, 내가 일하는 90병동에 제일 많다는 거다.\n오늘도 이상한 말들을 무사히 흘려보내고 퇴근할 수 있을까?`,
+            choices: [
+                { text: '1. 병동으로 출근한다.', next: 'scene1' }
+            ]
+        },
+        'scene1': {
+            title: '장면 1',
+            text: `"안녕하세요~"\n짧은 인사를 하고 자리에 앉는다.\n인계를 바삐 마치고 아침약을 보려는데, 스테이션 앞으로 보호사님👓이 나타난다.\n\n"아-하🎵"\n불길한 팔동작을 하며 걸어오신다.\n"참🐟치 먹으러 갑시다!🎵"\n\n도대체 무슨 말씀을 하시려는 걸까..\n참치 회를 말씀하시는 걸까. 식사 약속을 잡으시려는 걸까.`,
+            choices: [
+                { text: '1. 이야기를 들어본다.', next: 'scene1_1' },
+                { text: '2. 적당히 둘러댄다.', next: 'scene1_2' }
+            ]
+        },
+        'scene1_1': {
+            title: '장면 1, 1번 선택지',
+            text: `"참치요~? 갑자기 왠 참치예요?"\n\n"오늘 점심이! 참치마요 덮밥이예요! 핳핳핳! 😎"\n\n'보호사님은 왜 저런 농담을 하실까..'\n\n너무 어이없는 농담에 정신이 아득해진다.😵‍💫\n(정신력이 1 감소했다.)`,
+            mentalChange: -1,
+            choices: [{ text: '1. 다음으로 (장면 2로 향한다.)', next: 'scene2' }]
+        },
+        'scene1_2': {
+            title: '장면 1, 2번 선택지',
+            text: `"제가 참치를 못 먹어요 보호사님."\n\n"아, 그래요? 점심 메뉴가 나와서 그런건데.."\n\n보호사님은 멋쩍게 자리로 돌아갔다.\n어이없는 말을 듣지 않아서 다행이야.😊`,
+            choices: [{ text: '1. 다음으로 (장면 2로 향한다.)', next: 'scene2' }]
+        },
+        'scene2': {
+            title: '장면 2',
+            text: `자리에 앉아있던 보호사님은, B팀 선생님이 자리를 비운 사이 컴퓨터에 앉았다.\n\n"이번에요, 현대바이오에서 2상에 들어간게 있는데, 이번에는 진짜 유력하거든요. 근데 문제가 있어."\n\n늘 하시던 주식얘기인데, 뭐가 유력하다는 걸까?\n근데 아까 농담도 못 받아드렸는데.. 들어볼까?`,
+            choices: [
+                { text: '1. 아냐. 그래도 적당히 끊자.', next: 'scene2_1' },
+                { text: '2. 심심해 하시는 것 같은데 들어드릴까?', next: 'scene2_2' }
+            ]
+        },
+        'scene2_1': {
+            title: '장면 2, 1번 선택지',
+            text: `"보호사님 근데 샤워장 여셨어요?"\n\n"아이쿠, 그걸 깜빡했네. 핳핳. 😎"\n\n보호사님이 황급히 샤워장으로 향한다.🏃‍♂️`,
+            choices: [{ text: '1. 다음으로 (장면 3으로 향한다)', next: 'scene3' }]
+        },
+        'scene2_2': {
+            title: '장면 2, 2번 선택지',
+            text: `"무슨 일인데요?"\n\n보호사님의 눈빛이 번뜩였다.🤩\n\n"이게 2상에서 거부반응이 적어서 3상으로 갔는데, 이게 사실 코로나 치료제를 기반으로 한거거든요. 근데 코로나에서 연구했던 결과로 다른 바이러스를 치료한다는 거지. 이게 진짜 물건이거든요. 여기 단톡방에도 지금 뉴스만 조용하지 온 세상이 난리가 날 뉴스예요. 근데 식약처에서 허가를 안해줘. 식약처 이 쉐키들이..! 그래서 내가 민원을 넣었거든요. 당신들 배나 불리지 말고 똑바로 심사해라. 현대바이오 신약이 이제 허가를 받는게 타당하다...(중략)\n\n보호사님의 투머치 토크에 정신이 아득해졌다.😵‍💫\n(정신력이 1 감소했다.)`,
+            mentalChange: -1,
+            choices: [{ text: '1. 다음으로 (장면 3으로 향한다)', next: 'scene3' }]
+        },
+        'scene3': {
+            title: '장면 3',
+            text: `정신을 다잡고 다시 일에 열중하려 하는데, O원쌤이 나타나 옆에서 말을 건다.\n\n"선생님, 제가 이승현으로 삼행시를 만들었는데 들어보실래요?"\n\n저 선생님은 무슨 밑도 끝도 없는 얘기를 하는걸까.\n안 듣는다고 하면 상처받겠지..?`,
+            choices: [
+                { text: '1. 들어본다고 한다.', next: 'scene3_1' },
+                { text: '2. 거절한다.', next: 'scene3_2' }
+            ]
+        },
+        'scene3_1': {
+            title: '장면 3, 1번 선택지',
+            text: `이 : 이재명은!\n승 : 승리한다!\n현 : 현대바이오 화이팅!\n\n어이없어.😵‍💫\n\n말같지도 않은 소리를 들으니 정신이 아득해졌다.😵‍💫\n(정신력이 1 감소했다.)`,
+            mentalChange: -1,
+            choices: [{ text: '1. 다음으로 (장면 4로 향한다)', next: 'scene4' }]
+        },
+        'scene3_2': {
+            title: '장면 3, 2번 선택지',
+            text: `"아... 별로 안 듣고 싶어요."\n\n"앗 죄송합니다. 🥺"\n\nO원쌤은 상처받은 표정으로 자리로 돌아갔다.\n어이없는 말을 듣지 않아서 다행이야.😊`,
+            choices: [{ text: '1. 다음으로 (장면 4로 향한다)', next: 'scene4' }]
+        },
+        'scene4': {
+            title: '장면 4',
+            text: `열심히 일을 하고 있는데, 옆에서 O오쌤이 구글 프사를 한가롭게 고르고 있다.\n\n"OO야 이거 어때? 이 저먼 셰퍼드. 완전 나같지 않아?"\n\n맞다고 하면 저걸로 프사를 하겠지..? 어떻게 할까?`,
+            choices: [
+                { text: '1. 맞다고 한다.', next: 'scene4_1' },
+                { text: '2. 아니라고 한다.', next: 'scene4_2' }
+            ]
+        },
+        'scene4_1': {
+            title: '장면 4, 1번 선택지',
+            text: `"맞.. 는 것 같아. 하하."\n\n"맞지? 크으... 역↗시↘ 나는 이런 느낌이라니까."\n\n너무 자신감 넘치는 모습에 어이가 없어졌다.😵‍💫\n(정신력이 1 감소했다.)`,
+            mentalChange: -1,
+            choices: [{ text: '1. 다음으로 (장면 5로 향한다)', next: 'scene5' }]
+        },
+        'scene4_2': {
+            title: '장면 4, 2번 선택지',
+            text: `"잘 모르겠는데?"\n\n"그래? 역시 좀 그런가?"\n\nO오쌤은 의기소침해져선 구글 창을 닫는다.\n어이없는 말을 듣지 않아서 다행이야.😊`,
+            choices: [{ text: '1. 다음으로 (장면 5로 향한다.)', next: 'scene5' }]
+        },
+        'scene5': {
+            title: '장면 5',
+            text: `스테이션에 앉아 차팅을 넣고 있는데,\n고등학생 환자가 스테이션으로 나왔다.\n\n"선생님. 혹시 야⚾구 보세요?"\n\n야구는 잘 모르는데.. 관심도 별로 없어!\n어떻게 돌려보낼까? \n\n도와줄 사람이 있을까 고개를 돌려본다.`,
+            choices: [
+                { text: '1. 최O호 보호사님을 쳐다본다.', next: 'scene5_1' },
+                { text: '2. 임O범 선생님을 쳐다본다.', next: 'scene5_2' }
+            ]
+        },
+        'scene5_1': {
+            title: '장면 5, 1번 선택지',
+            text: `보호사님은 나의 눈빛을 받자 \n\n무슨 뜻인지 바로 알아듣고는 학생들에게 말한다.\n\n"어유, 지금 바쁘니께~ 좀 들어가셔~"\n\n"네~"\n\n학생은 군말 없이 병실로 돌아갔다.\n\n역시 보호사님이야!\n덕분에 어이없는 말을 듣지 않았어.😊\n(정신력이 1 회복 되었다.)`,
+            mentalChange: 1,
+            choices: [{ text: '1. 다음으로 (장면 6으로 향한다)', next: 'scene6' }]
+        },
+        'scene5_2': {
+            title: '장면 5, 2번 선택지',
+            text: `O범쌤은 내 눈빛의 의도는 전혀 알지 못한채\n야구 얘기에 눈빛이 반짝인다.\n\n"야⚾구는 당근 롯데빠따지~"\n"오 쌤 저도 롯데 팬인데"\n"주형광코치 이번에 이적하는거 아세요?🤷\n그러면 롯데 폼 떨어질텐데. 핳핳.🏏"\n"롯데는 진짜 못할 때도 롯데고 잘할 때도 롯데다~"\n"크으~ 맞지 야구 좀 치네요 선생님~"\n"요즘 한동희🧢 폼 미쳤지 않아요?"\n“범타여도 내용은 나쁘지 않지~🤸”\n"원래 폼 좋을때 믿으면 안된다🤸‍♂️"\n"핳핳핳핳!🤸‍♀️🤾🏃‍➡️"\n...\n...\n\n끝없이 이어지는 야구토크에 정신이 아득해졌다😵‍💫\n(정신력이 1 감소했다.)`,
+            mentalChange: -1,
+            choices: [{ text: '1. 다음으로 (장면 6으로 향한다)', next: 'scene6' }]
+        },
+        'scene6': {
+            title: '장면 6',
+            text: `오전일을 겨우 마무리하고 점심을 먹으러 내려왔다.\n\n"특별.. 메뉴?😨"\n\n"오늘은 둘 다 특별 메뉴입니다?"\n\n심상치 않은 느낌이 든다. 무슨 메뉴를 먹을까?`,
+            choices: [
+                { text: '1. 한식 요리(두반장흑임자연근샐러드덮밥)🍛🥗🍱', next: 'scene6_1' },
+                { text: '2. 일품 요리(쌈장드레싱취나물크림토스트)🫘🌿🍞', next: 'scene6_2' }
+            ]
+        },
+        'scene6_1': {
+            title: '장면 6, 1번 선택지',
+            text: `그렇게 받아온 두반장흑임자연근샐러드덮밥을 식탁에 내려놓는다.\n\n"아.. 보기만 해도 걱정된다."\n\n두려움에 떨며 한 스푼 입에 넣는다.😰\n\n"맛있잖아?"\n\n생각보다 감칠맛이 절묘하다!😌\n(정신력이 1 회복 되었다.)`,
+            mentalChange: 1,
+            choices: [{ text: '1. 다음으로 (장면 7로 향한다)', next: 'scene7' }]
+        },
+        'scene6_2': {
+            title: '장면 6, 2번 선택지',
+            text: `그렇게 받아온 쌈장드레싱취나물크림토스트를 식탁에 내려놓는다.\n\n"아.. 보기만 해도 걱정된다."\n\n두려움에 떨며 한 스푼 입에 넣는다.😰\n\n"우웩!"\n\n쌈장과 전혀 맞지 않는 토스트의 버터향기에 정신이 아득해졌다😵‍💫\n(정신력이 1 감소했다.)`,
+            mentalChange: -1,
+            choices: [{ text: '1. 다음으로 (장면 7로 향한다)', next: 'scene7' }]
+        },
+        'scene7': {
+            title: '장면 7',
+            text: `"다녀왔습니다~"\n짧은 인사를 하고 자리에 앉는다.\n다시 일할 준비를 하려는데, 스테이션 앞으로 보호사님👓이 나타난다.\n\n"아-하🎵-🎶"\n또다시 불길한 팔동작을 하며 걸어오신다.\n"이번에는, 🐙쭈🐙꾸🐙미🐙 먹으러 갑시다!🎵"\n\n이번에는 또 무슨 말씀을 하시려는 걸까..\n또 이상한 장난을 치려는 걸까?`,
+            choices: [
+                { text: '1. 장난 좀 그만 하시라고 한다.', next: 'scene7_1' },
+                { text: '2. 좋다고 한다.', next: 'scene7_2' }
+            ]
+        },
+        'scene7_1': {
+            title: '장면 7, 1번 선택지',
+            text: `"보호사님, 장난 좀 그만 하세요.. 또 메뉴가지고 그러시는 거예요?"\n\n두 번은 너무 심했지. 나도 한 마디 한다.💢\n\n"아.. 나는 지금까지 같이 일한게 고마워서..\n이번에는 제대로 사려고 헀던 건데..\n싫으면 말어요..🥲"\n\n보호사님은 우울해져선 자리에 추욱 늘어졌다.\n\n아.. 진심으로 사려고 하신 거였구나. \n\n갑작스런 실수에 죄책감이 몰려온다.😭\n(정신력이 1 감소했다.)`,
+            mentalChange: -1,
+            choices: [{ text: '1. 다음으로 (장면 8로 향한다)', next: 'scene8' }]
+        },
+        'scene7_2': {
+            title: '장면 7, 2번 선택지',
+            text: `"어 저는 조.."\n"제가 좋아요 보호사님! 저랑 가요~"\n\n어느샌가 나타난 O범 쌤이 보호사님에게 흔쾌히 반응한다.\n\n"제가 또 쭈꾸미 하면 맛집 네비게이션이죠~"\n"아유. 나야 좋지. 언제 쭈꾸미나 사줄게요."\n\n화기애애한 분위기에 나는 자연스럽게 넘어갔다.`,
+            choices: [{ text: '1. 다음으로 (장면 8로 향한다)', next: 'scene8' }]
+        },
+        'scene8': {
+            title: '장면 8',
+            text: `아직 개발중입니다. 감사합니다.`,
+            choices: [{ text: '1. 처음으로 돌아간다(인트로로 향한다)', next: 'intro', reset: true }]
+        },
+        'gameover': {
+            title: '패배',
+            text: `정신력이 모두 소진되었습니다...\n90병동의 혼란 속에서 버텨내지 못했습니다.\n\n"선생님..? 선생님!! 정신 차리세요!"`,
+            choices: [{ text: '다시 도전하기', next: 'intro', reset: true }]
+        }
+    };
 
-let sanity = 3;
-let typing = false;
-const speed = 35;
+    let currentMental = 3;
+    let isTyping = false;
+    const textDisplay = document.getElementById('textDisplay');
+    const choiceContainer = document.getElementById('choiceContainer');
+    const mentalIcons = document.getElementById('mentalIcons');
 
-function updateSanity(){
-  sanityEl.textContent = "정신력 " + "🧠".repeat(sanity);
-  if(sanity<=0) defeat();
-}
-
-function defeat(){
-  textEl.textContent = "정신력이 모두 소진되었습니다.\n오늘은 퇴근하지 못했습니다…";
-  choiceEl.innerHTML="";
-}
-
-function typeText(text, cb){
-  typing=true;
-  textEl.textContent="";
-  let i=0;
-  const t=setInterval(()=>{
-    textEl.textContent+=text[i++];
-    if(i>=text.length){
-      clearInterval(t);
-      typing=false;
-      if(cb)cb();
+    function updateMentalDisplay() {
+        mentalIcons.innerHTML = '🧠'.repeat(Math.max(0, currentMental));
+        if (currentMental <= 0) {
+            // 모든 연출이 끝나면 게임오버 처리
+        }
     }
-  },speed);
-}
 
-function choices(arr){
-  choiceEl.innerHTML="";
-  arr.forEach(c=>{
-    const b=document.createElement("button");
-    b.textContent=c.t;
-    b.onclick=()=>{ if(!typing) c.a(); };
-    choiceEl.appendChild(b);
-  });
-}
-
-updateSanity();
-
-/* ---------- INTRO ---------- */
-function intro(){
-typeText(
-`세상엔 이해할 수 없는 사람들이 참 많은 것 같다.
-가장 슬픈 건, 내가 일하는 90병동에 제일 많다는 거다.
-오늘도 이상한 말들을 무사히 흘려보내고 퇴근할 수 있을까?`,
-()=>choices([{t:"1. 병동으로 출근한다.",a:scene1}])
-);
-}
-
-/* ---------- SCENE 1 ---------- */
-function scene1(){
-typeText(
-`"안녕하세요~"
-짧은 인사를 하고 자리에 앉는다.
-인계를 바삐 마치고 아침약을 보려는데, 스테이션 앞으로 보호사님👓이 나타난다.
-
-"아-하🎵"
-불길한 팔동작을 하며 걸어오신다.
-"참🐟치 먹으러 갑시다!🎵"
-
-도대체 무슨 말씀을 하시려는 걸까..
-참치 회를 말씀하시는 걸까. 식사 약속을 잡으시려는 걸까.`,
-()=>choices([
-{t:"1. 이야기를 들어본다.",a:scene1_1},
-{t:"2. 적당히 둘러댄다.",a:scene1_2}
-]));
-}
-
-function scene1_1(){
-typeText(
-`"참치요~? 갑자기 왠 참치예요?"
-
-"오늘 점심이! 참치마요 덮밥이예요! 핳핳핳! 😎"
-
-'보호사님은 왜 저런 농담을 하실까..'
-
-너무 어이없는 농담에 정신이 아득해진다.😵‍💫`,
-()=>{
-sanity--; updateSanity();
-choices([{t:"1. 다음으로 (장면 2로 향한다.)",a:scene2}]);
-});
-}
-
-function scene1_2(){
-typeText(
-`"제가 참치를 못 먹어요 보호사님."
-
-"아, 그래요? 점심 메뉴가 나와서 그런건데.."
-
-보호사님은 멋쩍게 자리로 돌아갔다.
-어이없는 말을 듣지 않아서 다행이야.😊`,
-()=>choices([{t:"1. 다음으로 (장면 2로 향한다.)",a:scene2}])
-);
-}
-
-/* ---------- SCENE 2 ---------- */
-function scene2(){
-typeText(
-`멋쩍게 앉아있던 보호사님은, B팀 선생님이 자리를 비운 사이 컴퓨터에 앉았다.
-
-"이번에요, 현대바이오에서 2상에 들어간게 있는데, 이번에는 진짜 유력하거든요. 근데 문제가 있어."
-
-늘 하시던 주식얘기인데, 뭐가 유력하다는 걸까?
-근데 아까 농담도 못 받아드렸는데.. 들어볼까?`,
-()=>choices([
-{t:"1. 아냐. 그래도 적당히 끊자.",a:scene2_1},
-{t:"2. 심심해 하시는 것 같은데 들어드릴까?",a:scene2_2}
-]));
-}
-
-function scene2_1(){
-typeText(
-`"보호사님 근데 샤워장 여셨어요?"
-
-"아이쿠, 그걸 깜빡했네. 핳핳. 😎"
-
-보호사님이 황급히 샤워장으로 향한다.🏃‍♂️`,
-()=>choices([{t:"1. 다음으로 (장면 3으로 향한다)",a:scene3}])
-);
-}
-
-function scene2_2(){
-typeText(
-`"무슨 일인데요?"
-
-보호사님의 눈빛이 번뜩였다.🤩
-
-"이게 2상에서 거부반응이 적어서 3상으로 갔는데, 이게 사실 코로나 치료제를 기반으로 한거거든요. 근데 코로나에서 연구했던 결과로 다른 바이러스를 치료한다는 거지. 이게 진짜 물건이거든요. 여기 단톡방에도 지금 뉴스만 조용하지 온 세상이 난리가 날 뉴스예요. 근데 식약처에서 허가를 안해줘. 식약처 이 쉐키들이..! 그래서 내가 민원을 넣었거든요. 당신들 배나 불리지 말고 똑바로 심사해라. 현대바이오 신약이 이제 허가를 받는게 타당하다...(중략)
-
-보호사님의 투머치 토크에 정신이 아득해졌다.😵‍💫`,
-()=>{
-sanity--; updateSanity();
-choices([{t:"1. 다음으로 (장면 3으로 향한다)",a:scene3}]);
-});
-}
-
-/* ---------- SCENE 3 ---------- */
-function scene3(){
-typeText(
-`정신을 다잡고 다시 일에 열중하려 하는데, O원쌤이 나타나 옆에서 말을 건다.
-
-"선생님, 제가 이승현으로 삼행시를 만들었는데 들어보실래요?"
-
-저 선생님은 무슨 밑도 끝도 없는 얘기를 하는걸까.
-안 듣는다고 하면 상처받겠지..?`,
-()=>choices([
-{t:"1. 들어본다고 한다.",a:scene3_1},
-{t:"2. 거절한다.",a:scene3_2}
-]));
-}
-
-function scene3_1(){
-typeText(
-`이 : 이재명은!
-승 : 승리한다!
-현 : 현대바이오 화이팅!
-
-어이없어.😵‍💫
-
-말같지도 않은 소리를 들으니 정신이 아득해졌다.😵‍💫`,
-()=>{
-sanity--; updateSanity();
-choices([{t:"1. 다음으로 (장면 4로 향한다)",a:scene4}]);
-});
-}
-
-function scene3_2(){
-typeText(
-`"아... 별로 안 듣고 싶어요."
-
-"앗 죄송합니다. 🥺"
-
-O원쌤은 상처받은 표정으로 자리로 돌아갔다.
-어이없는 말을 듣지 않아서 다행이야.😊`,
-()=>choices([{t:"1. 다음으로 (장면 4로 향한다)",a:scene4}])
-);
-}
-
-/* ---------- SCENE 4 ---------- */
-function scene4(){
-typeText(
-`열심히 일을 하고 있는데, 옆에서 O오쌤이 구글 프사를 한가롭게 고르고 있다.
-
-"OO야 이거 어때? 이 저먼 셰퍼드. 완전 나같지 않아?"
-
-맞다고 하면 저걸로 프사를 하겠지..? 어떻게 할까?`,
-()=>choices([
-{t:"1. 맞다고 한다.",a:scene4_1},
-{t:"2. 아니라고 한다.",a:scene4_2}
-]));
-}
-
-function scene4_1(){
-typeText(
-`"맞.. 는 것 같아. 하하."
-
-"맞지? 크으... 역↗시↘ 나는 이런 느낌이라니까."
-
-너무 자신감 넘치는 모습에 어이가 없어졌다.😵‍💫`,
-()=>{
-sanity--; updateSanity();
-choices([{t:"1. 다음으로 (장면 5로 향한다)",a:scene5}]);
-});
-}
-
-function scene4_2(){
-typeText(
-`"잘 모르겠는데?"
-
-"그래? 역시 좀 그런가?"
-
-O오쌤은 의기소침해져선 구글 창을 닫는다.
-어이없는 말을 듣지 않아서 다행이야.😊`,
-()=>choices([{t:"1. 다음으로 (장면 5로 향한다.)",a:scene5}])
-);
-}
-
-/* ---------- SCENE 5 ---------- */
-function scene5(){
-typeText(
-`스테이션에 앉아 차팅을 넣고 있는데,
-고등학생 환자가 스테이션으로 나왔다.
-
-"선생님. 혹시 야⚾구 보세요?"
-
-야구는 잘 모르는데.. 관심도 별로 없어!
-어떻게 돌려보낼까? 
-
-도와줄 사람이 있을까 고개를 돌려본다.`,
-()=>choices([
-{t:"1. 최O호 보호사님을 쳐다본다.",a:scene5_1},
-{t:"2. 임O범 선생님을 쳐다본다.",a:scene5_2}
-]));
-}
-
-function scene5_1(){
-typeText(
-`보호사님은 나의 눈빛을 받자 
-
-무슨 뜻인지 바로 알아듣고는 학생들에게 말한다.
-
-"어유, 지금 바쁘니께~ 좀 들어가셔~"
-
-"네~"
-
-학생은 군말 없이 병실로 돌아갔다.
-
-역시 보호사님이야!
-덕분에 어이없는 말을 듣지 않았어.😊`,
-()=>{
-sanity++; updateSanity();
-choices([{t:"1. 다음으로 (장면 6으로 향한다)",a:scene6}]);
-});
-}
-
-function scene5_2(){
-typeText(
-`O범쌤은 내 눈빛의 의도는 전혀 알지 못한채
-야구 얘기에 눈빛이 반짝인다.
-
-"야⚾구는 당근 롯데빠따지~"
-"오 쌤 저도 롯데 팬인데"
-"주형광코치 이번에 이적하는거 아세요?🤷
-그러면 롯데 폼 떨어질텐데. 핳핳.🏏"
-"롯데는 진짜 못할 때도 롯데고 잘할 때도 롯데다~"
-"크으~ 맞지 야구 좀 치네요 선생님~"
-"요즘 한동희🧢 폼 미쳤지 않아요?"
-“범타여도 내용은 나쁘지 않지~🤸”
-"원래 폼 좋을때 믿으면 안된다🤸‍♂️"
-"핳핳핳핳!🤸‍♀️🤾🏃‍➡️"
-...
-...
-
-끝없이 이어지는 야구토크에 정신이 아득해졌다😵‍💫`,
-()=>{
-sanity--; updateSanity();
-choices([{t:"1. 다음으로 (장면 6으로 향한다)",a:scene6}]);
-});
-}
-
-/* ---------- SCENE 6 ---------- */
-function scene6(){
-typeText(
-`오전일을 겨우 마무리하고 점심을 먹으러 내려왔다.
-
-"특별.. 메뉴?😨"
-
-"오늘은 둘 다 특별 메뉴입니다?"
-
-심상치 않은 느낌이 든다. 무슨 메뉴를 먹을까?`,
-()=>choices([
-{t:"1. 한식 요리(두반장흑임자연근샐러드덮밥)🍛🥗🍱",a:scene6_1},
-{t:"2. 일품 요리(쌈장드레싱취나물크림토스트)🫘🌿🍞",a:scene6_2}
-]));
-}
-
-function scene6_1(){
-typeText(
-`그렇게 받아온 두반장흑임자연근샐러드덮밥을 식탁에 내려놓는다.
-
-"아.. 보기만 해도 걱정된다."
-
-두려움에 떨며 한 스푼 입에 넣는다.😰
-
-"맛있잖아?"
-
-생각보다 감칠맛이 절묘하다!😌`,
-()=>{
-sanity++; updateSanity();
-choices([{t:"1. 다음으로 (장면 7로 향한다)",a:scene7}]);
-});
-}
-
-function scene6_2(){
-typeText(
-`그렇게 받아온 쌈장드레싱취나물크림토스트를 식탁에 내려놓는다.
-
-"아.. 보기만 해도 걱정된다."
-
-두려움에 떨며 한 스푼 입에 넣는다.😰
-
-"우웩!"
-
-쌈장과 전혀 맞지 않는 토스트의 버터향기에 정신이 아득해졌다😵‍💫`,
-()=>{
-sanity--; updateSanity();
-choices([{t:"1. 다음으로 (장면 7로 향한다)",a:scene7}]);
-});
-}
-
-/* ---------- SCENE 7 ---------- */
-function scene7(){
-typeText(
-`"다녀왔습니다~"
-짧은 인사를 하고 자리에 앉는다.
-다시 일할 준비를 하려는데, 스테이션 앞으로 보호사님👓이 나타난다.
-
-"아-하🎵-🎶"
-또다시 불길한 팔동작을 하며 걸어오신다.
-"이번에는, 🐙쭈🐙꾸🐙미🐙 먹으러 갑시다!🎵"
-
-이번에는 또 무슨 말씀을 하시려는 걸까..
-또 이상한 장난을 치려는 걸까?`,
-()=>choices([
-{t:"1. 장난 좀 그만 하시라고 한다.",a:scene7_1},
-{t:"2. 좋다고 한다.",a:scene7_2}
-]));
-}
-
-function scene7_1(){
-typeText(
-`"보호사님, 장난 좀 그만 하세요.. 또 메뉴가지고 그러시는 거예요?"
-
-두 번은 너무 심했지. 나도 한 마디 한다.💢
-
-"아.. 나는 지금까지 같이 일한게 고마워서..
-이번에는 제대로 사려고 헀던 건데..
-싫으면 말어요..🥲"
-
-보호사님은 우울해져선 자리에 추욱 늘어졌다.
-
-아.. 진심으로 사려고 하신 거였구나. 
-
-갑작스런 실수에 죄책감이 몰려온다.😭`,
-()=>{
-sanity--; updateSanity();
-choices([{t:"1. 다음으로 (장면 8로 향한다)",a:scene8}]);
-});
-}
-
-function scene7_2(){
-typeText(
-`"어 저는 조.."
-"제가 좋아요 보호사님! 저랑 가요~"
-
-어느샌가 나타난 O범 쌤이 보호사님에게 흔쾌히 반응한다.
-
-"제가 또 쭈꾸미 하면 맛집 네비게이션이죠~"
-"아유. 나야 좋지. 언제 쭈꾸미나 사줄게요."
-
-화기애애한 분위기에 나는 자연스럽게 넘어갔다.`,
-()=>choices([{t:"1. 다음으로 (장면 8로 향한다)",a:scene8}])
-);
-}
-
-/* ---------- SCENE 8 ---------- */
-function scene8(){
-typeText(
-`아직 개발중입니다. 감사합니다.`,
-()=>choices([{t:"1. 처음으로 돌아간다(인트로로 향한다)",a:()=>{sanity=3;updateSanity();intro();}}])
-);
-}
-
-intro();
+    async function typeText(element, text) {
+        isTyping = true;
+        element.classList.add('typing-cursor');
+        let i = 0;
+        const speed = 25; // 타이핑 속도 (ms)
+
+        return new Promise(resolve => {
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    textDisplay.scrollTop = textDisplay.scrollHeight;
+                    setTimeout(type, speed);
+                } else {
+                    element.classList.remove('typing-cursor');
+                    isTyping = false;
+                    resolve();
+                }
+            }
+            type();
+        });
+    }
+
+    async function loadScene(sceneId) {
+        const scene = gameData[sceneId];
+        if (!scene) return;
+
+        // 초기화
+        textDisplay.innerHTML = '';
+        choiceContainer.innerHTML = '';
+
+        // 타이틀 표시
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'scene-title';
+        titleSpan.innerText = scene.title;
+        textDisplay.appendChild(titleSpan);
+
+        // 정신력 변화 처리
+        if (scene.mentalChange) {
+            currentMental += scene.mentalChange;
+            if (currentMental > 3) currentMental = 3; // 최대치 고정
+            updateMentalDisplay();
+        }
+
+        // 텍스트 출력
+        const dialogueDiv = document.createElement('div');
+        dialogueDiv.className = 'dialogue-text';
+        textDisplay.appendChild(dialogueDiv);
+        
+        await typeText(dialogueDiv, scene.text);
+
+        // 게임오버 체크
+        if (currentMental <= 0 && sceneId !== 'gameover') {
+            setTimeout(() => loadScene('gameover'), 1000);
+            return;
+        }
+
+        // 선택지 출력
+        scene.choices.forEach((choice, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.style.animationDelay = `${index * 0.1}s`;
+            btn.innerText = choice.text;
+            btn.onclick = () => {
+                if (isTyping) return;
+                if (choice.reset) {
+                    currentMental = 3;
+                    updateMentalDisplay();
+                }
+                loadScene(choice.next);
+            };
+            choiceContainer.appendChild(btn);
+        });
+    }
+
+    // 게임 시작
+    window.onload = () => {
+        updateMentalDisplay();
+        loadScene('intro');
+    };
 </script>
+
 </body>
 </html>
