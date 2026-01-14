@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>90병동 텍스트 어드벤처</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap" rel="stylesheet">
@@ -15,13 +15,14 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            height: 100svh; /* 모바일 주소창 대응 */
             margin: 0;
             overflow: hidden;
         }
         .game-container {
             width: 100%;
             max-width: 500px;
-            height: 100vh;
+            height: 100%;
             background: #1e293b;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             display: flex;
@@ -29,79 +30,83 @@
             position: relative;
         }
         .text-display {
-            flex-grow: 1;
-            padding: 2rem;
+            flex: 1;
+            padding: 1.5rem;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            gap: 1.5rem;
-            line-height: 1.8;
-            font-size: 1.1rem;
+            gap: 1rem;
+            line-height: 1.7;
+            font-size: 1.05rem;
+            /* 스크롤바 숨기기 (선택사항) */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .text-display::-webkit-scrollbar {
+            display: none;
         }
         .choice-container {
-            padding: 2rem;
+            padding: 1.25rem;
             background: #1e293b;
             border-top: 1px solid #334155;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem;
+            flex-shrink: 0; /* 선택지 영역 크기 고정 */
         }
         .choice-btn {
             background: #334155;
             border: 1px solid #475569;
-            padding: 1rem;
+            padding: 0.875rem 1rem;
             border-radius: 0.75rem;
             text-align: left;
             transition: all 0.2s;
             opacity: 0;
             transform: translateY(10px);
-            animation: fadeIn 0.5s forwards;
+            animation: fadeIn 0.4s forwards;
+            font-size: 0.95rem;
+            touch-action: manipulation;
         }
-        .choice-btn:hover {
+        .choice-btn:active {
             background: #475569;
-            border-color: #64748b;
+            transform: scale(0.98);
         }
         @keyframes fadeIn {
             to { opacity: 1; transform: translateY(0); }
         }
         .mental-bar {
-            padding: 1rem 2rem;
+            padding: 0.75rem 1.5rem;
             background: #0f172a;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #334155;
+            flex-shrink: 0;
         }
         .mental-icons {
-            font-size: 1.5rem;
-            letter-spacing: 0.25rem;
+            font-size: 1.25rem;
+            letter-spacing: 0.2rem;
         }
         .typing-cursor::after {
             content: '|';
             animation: blink 0.7s infinite;
+            color: #64748b;
         }
         @keyframes blink {
             50% { opacity: 0; }
         }
         .scene-title {
-            color: #94a3b8;
-            font-size: 0.8rem;
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: -0.5rem;
+            letter-spacing: 0.05em;
+            margin-bottom: -0.25rem;
         }
         .dialogue-text {
             white-space: pre-wrap;
-        }
-        .mental-change {
-            font-weight: bold;
-            color: #fb7185;
-            animation: bounce 1s infinite;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+            word-break: keep-all;
         }
     </style>
 </head>
@@ -109,7 +114,7 @@
 
 <div class="game-container">
     <div class="mental-bar" id="mentalBar">
-        <span class="text-sm font-bold text-slate-400">정신력</span>
+        <span class="text-xs font-bold text-slate-400">정신력</span>
         <div class="mental-icons" id="mentalIcons"></div>
     </div>
     
@@ -140,13 +145,13 @@
             ]
         },
         'scene1_1': {
-            title: '장면 1, 1번 선택지',
+            title: '장면 1-1',
             text: `"참치요~? 갑자기 왠 참치예요?"\n\n"오늘 점심이! 참치마요 덮밥이예요! 핳핳핳! 😎"\n\n'보호사님은 왜 저런 농담을 하실까..'\n\n너무 어이없는 농담에 정신이 아득해진다.😵‍💫\n(정신력이 1 감소했다.)`,
             mentalChange: -1,
             choices: [{ text: '1. 다음으로 (장면 2로 향한다.)', next: 'scene2' }]
         },
         'scene1_2': {
-            title: '장면 1, 2번 선택지',
+            title: '장면 1-2',
             text: `"제가 참치를 못 먹어요 보호사님."\n\n"아, 그래요? 점심 메뉴가 나와서 그런건데.."\n\n보호사님은 멋쩍게 자리로 돌아갔다.\n어이없는 말을 듣지 않아서 다행이야.😊`,
             choices: [{ text: '1. 다음으로 (장면 2로 향한다.)', next: 'scene2' }]
         },
@@ -159,12 +164,12 @@
             ]
         },
         'scene2_1': {
-            title: '장면 2, 1번 선택지',
+            title: '장면 2-1',
             text: `"보호사님 근데 샤워장 여셨어요?"\n\n"아이쿠, 그걸 깜빡했네. 핳핳. 😎"\n\n보호사님이 황급히 샤워장으로 향한다.🏃‍♂️`,
             choices: [{ text: '1. 다음으로 (장면 3으로 향한다)', next: 'scene3' }]
         },
         'scene2_2': {
-            title: '장면 2, 2번 선택지',
+            title: '장면 2-2',
             text: `"무슨 일인데요?"\n\n보호사님의 눈빛이 번뜩였다.🤩\n\n"이게 2상에서 거부반응이 적어서 3상으로 갔는데, 이게 사실 코로나 치료제를 기반으로 한거거든요. 근데 코로나에서 연구했던 결과로 다른 바이러스를 치료한다는 거지. 이게 진짜 물건이거든요. 여기 단톡방에도 지금 뉴스만 조용하지 온 세상이 난리가 날 뉴스예요. 근데 식약처에서 허가를 안해줘. 식약처 이 쉐키들이..! 그래서 내가 민원을 넣었거든요. 당신들 배나 불리지 말고 똑바로 심사해라. 현대바이오 신약이 이제 허가를 받는게 타당하다...(중략)\n\n보호사님의 투머치 토크에 정신이 아득해졌다.😵‍💫\n(정신력이 1 감소했다.)`,
             mentalChange: -1,
             choices: [{ text: '1. 다음으로 (장면 3으로 향한다)', next: 'scene3' }]
@@ -178,13 +183,13 @@
             ]
         },
         'scene3_1': {
-            title: '장면 3, 1번 선택지',
+            title: '장면 3-1',
             text: `이 : 이재명은!\n승 : 승리한다!\n현 : 현대바이오 화이팅!\n\n어이없어.😵‍💫\n\n말같지도 않은 소리를 들으니 정신이 아득해졌다.😵‍💫\n(정신력이 1 감소했다.)`,
             mentalChange: -1,
             choices: [{ text: '1. 다음으로 (장면 4로 향한다)', next: 'scene4' }]
         },
         'scene3_2': {
-            title: '장면 3, 2번 선택지',
+            title: '장면 3-2',
             text: `"아... 별로 안 듣고 싶어요."\n\n"앗 죄송합니다. 🥺"\n\nO원쌤은 상처받은 표정으로 자리로 돌아갔다.\n어이없는 말을 듣지 않아서 다행이야.😊`,
             choices: [{ text: '1. 다음으로 (장면 4로 향한다)', next: 'scene4' }]
         },
@@ -197,13 +202,13 @@
             ]
         },
         'scene4_1': {
-            title: '장면 4, 1번 선택지',
+            title: '장면 4-1',
             text: `"맞.. 는 것 같아. 하하."\n\n"맞지? 크으... 역↗시↘ 나는 이런 느낌이라니까."\n\n너무 자신감 넘치는 모습에 어이가 없어졌다.😵‍💫\n(정신력이 1 감소했다.)`,
             mentalChange: -1,
             choices: [{ text: '1. 다음으로 (장면 5로 향한다)', next: 'scene5' }]
         },
         'scene4_2': {
-            title: '장면 4, 2번 선택지',
+            title: '장면 4-2',
             text: `"잘 모르겠는데?"\n\n"그래? 역시 좀 그런가?"\n\nO오쌤은 의기소침해져선 구글 창을 닫는다.\n어이없는 말을 듣지 않아서 다행이야.😊`,
             choices: [{ text: '1. 다음으로 (장면 5로 향한다.)', next: 'scene5' }]
         },
@@ -216,13 +221,13 @@
             ]
         },
         'scene5_1': {
-            title: '장면 5, 1번 선택지',
+            title: '장면 5-1',
             text: `보호사님은 나의 눈빛을 받자 \n\n무슨 뜻인지 바로 알아듣고는 학생들에게 말한다.\n\n"어유, 지금 바쁘니께~ 좀 들어가셔~"\n\n"네~"\n\n학생은 군말 없이 병실로 돌아갔다.\n\n역시 보호사님이야!\n덕분에 어이없는 말을 듣지 않았어.😊\n(정신력이 1 회복 되었다.)`,
             mentalChange: 1,
             choices: [{ text: '1. 다음으로 (장면 6으로 향한다)', next: 'scene6' }]
         },
         'scene5_2': {
-            title: '장면 5, 2번 선택지',
+            title: '장면 5-2',
             text: `O범쌤은 내 눈빛의 의도는 전혀 알지 못한채\n야구 얘기에 눈빛이 반짝인다.\n\n"야⚾구는 당근 롯데빠따지~"\n"오 쌤 저도 롯데 팬인데"\n"주형광코치 이번에 이적하는거 아세요?🤷\n그러면 롯데 폼 떨어질텐데. 핳핳.🏏"\n"롯데는 진짜 못할 때도 롯데고 잘할 때도 롯데다~"\n"크으~ 맞지 야구 좀 치네요 선생님~"\n"요즘 한동희🧢 폼 미쳤지 않아요?"\n“범타여도 내용은 나쁘지 않지~🤸”\n"원래 폼 좋을때 믿으면 안된다🤸‍♂️"\n"핳핳핳핳!🤸‍♀️🤾🏃‍➡️"\n...\n...\n\n끝없이 이어지는 야구토크에 정신이 아득해졌다😵‍💫\n(정신력이 1 감소했다.)`,
             mentalChange: -1,
             choices: [{ text: '1. 다음으로 (장면 6으로 향한다)', next: 'scene6' }]
@@ -236,13 +241,13 @@
             ]
         },
         'scene6_1': {
-            title: '장면 6, 1번 선택지',
+            title: '장면 6-1',
             text: `그렇게 받아온 두반장흑임자연근샐러드덮밥을 식탁에 내려놓는다.\n\n"아.. 보기만 해도 걱정된다."\n\n두려움에 떨며 한 스푼 입에 넣는다.😰\n\n"맛있잖아?"\n\n생각보다 감칠맛이 절묘하다!😌\n(정신력이 1 회복 되었다.)`,
             mentalChange: 1,
             choices: [{ text: '1. 다음으로 (장면 7로 향한다)', next: 'scene7' }]
         },
         'scene6_2': {
-            title: '장면 6, 2번 선택지',
+            title: '장면 6-2',
             text: `그렇게 받아온 쌈장드레싱취나물크림토스트를 식탁에 내려놓는다.\n\n"아.. 보기만 해도 걱정된다."\n\n두려움에 떨며 한 스푼 입에 넣는다.😰\n\n"우웩!"\n\n쌈장과 전혀 맞지 않는 토스트의 버터향기에 정신이 아득해졌다😵‍💫\n(정신력이 1 감소했다.)`,
             mentalChange: -1,
             choices: [{ text: '1. 다음으로 (장면 7로 향한다)', next: 'scene7' }]
@@ -256,13 +261,13 @@
             ]
         },
         'scene7_1': {
-            title: '장면 7, 1번 선택지',
+            title: '장면 7-1',
             text: `"보호사님, 장난 좀 그만 하세요.. 또 메뉴가지고 그러시는 거예요?"\n\n두 번은 너무 심했지. 나도 한 마디 한다.💢\n\n"아.. 나는 지금까지 같이 일한게 고마워서..\n이번에는 제대로 사려고 헀던 건데..\n싫으면 말어요..🥲"\n\n보호사님은 우울해져선 자리에 추욱 늘어졌다.\n\n아.. 진심으로 사려고 하신 거였구나. \n\n갑작스런 실수에 죄책감이 몰려온다.😭\n(정신력이 1 감소했다.)`,
             mentalChange: -1,
             choices: [{ text: '1. 다음으로 (장면 8로 향한다)', next: 'scene8' }]
         },
         'scene7_2': {
-            title: '장면 7, 2번 선택지',
+            title: '장면 7-2',
             text: `"어 저는 조.."\n"제가 좋아요 보호사님! 저랑 가요~"\n\n어느샌가 나타난 O범 쌤이 보호사님에게 흔쾌히 반응한다.\n\n"제가 또 쭈꾸미 하면 맛집 네비게이션이죠~"\n"아유. 나야 좋지. 언제 쭈꾸미나 사줄게요."\n\n화기애애한 분위기에 나는 자연스럽게 넘어갔다.`,
             choices: [{ text: '1. 다음으로 (장면 8로 향한다)', next: 'scene8' }]
         },
@@ -286,16 +291,13 @@
 
     function updateMentalDisplay() {
         mentalIcons.innerHTML = '🧠'.repeat(Math.max(0, currentMental));
-        if (currentMental <= 0) {
-            // 모든 연출이 끝나면 게임오버 처리
-        }
     }
 
     async function typeText(element, text) {
         isTyping = true;
         element.classList.add('typing-cursor');
         let i = 0;
-        const speed = 25; // 타이핑 속도 (ms)
+        const speed = 20;
 
         return new Promise(resolve => {
             function type() {
@@ -318,37 +320,31 @@
         const scene = gameData[sceneId];
         if (!scene) return;
 
-        // 초기화
         textDisplay.innerHTML = '';
         choiceContainer.innerHTML = '';
 
-        // 타이틀 표시
         const titleSpan = document.createElement('span');
         titleSpan.className = 'scene-title';
         titleSpan.innerText = scene.title;
         textDisplay.appendChild(titleSpan);
 
-        // 정신력 변화 처리
         if (scene.mentalChange) {
             currentMental += scene.mentalChange;
-            if (currentMental > 3) currentMental = 3; // 최대치 고정
+            if (currentMental > 3) currentMental = 3;
             updateMentalDisplay();
         }
 
-        // 텍스트 출력
         const dialogueDiv = document.createElement('div');
         dialogueDiv.className = 'dialogue-text';
         textDisplay.appendChild(dialogueDiv);
         
         await typeText(dialogueDiv, scene.text);
 
-        // 게임오버 체크
         if (currentMental <= 0 && sceneId !== 'gameover') {
-            setTimeout(() => loadScene('gameover'), 1000);
+            setTimeout(() => loadScene('gameover'), 800);
             return;
         }
 
-        // 선택지 출력
         scene.choices.forEach((choice, index) => {
             const btn = document.createElement('button');
             btn.className = 'choice-btn';
@@ -366,7 +362,6 @@
         });
     }
 
-    // 게임 시작
     window.onload = () => {
         updateMentalDisplay();
         loadScene('intro');
